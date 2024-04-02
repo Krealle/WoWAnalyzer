@@ -1,12 +1,10 @@
 export {
   default as LeapingFlamesNormalizer,
   default as LivingFlameNormalizer,
-  getLeapingDamageEvents,
-  getLeapingHealEvents,
-  generatedEssenceBurst,
-  getCastedGeneratedEssenceBurst,
+  eventGeneratedEB,
+  getGeneratedEBEvents,
   isFromLeapingFlames,
-  getWastedEssenceBurst,
+  getWastedEBEvents,
 } from './modules/normalizers/LeapingFlamesNormalizer';
 export { default as LeapingFlames } from './modules/talents/LeapingFlames';
 export { default as SpellEssenceCost } from './modules/core/essence/SpellEssenceCost';
