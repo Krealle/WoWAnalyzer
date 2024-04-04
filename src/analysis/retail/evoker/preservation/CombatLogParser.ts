@@ -53,6 +53,7 @@ import {
   LivingFlamePrePullNormalizer,
   LeapingFlamesNormalizer,
   EBRefreshNormalizer,
+  EssenceBurstCastLinkNormalizer,
   LeapingFlames,
   SpellEssenceCost,
   EssenceTracker,
@@ -67,6 +68,7 @@ class CombatLogParser extends CoreCombatLogParser {
     cooldowns: CooldownThroughputTracker,
 
     // Normalizer
+    essenceBurstCastLinkNormalizer: EssenceBurstCastLinkNormalizer,
     ebRefreshNormalizer: EBRefreshNormalizer,
     livingFlameNormalizer: LivingFlameNormalizer,
     castLinkNormalizer: CastLinkNormalizer,
