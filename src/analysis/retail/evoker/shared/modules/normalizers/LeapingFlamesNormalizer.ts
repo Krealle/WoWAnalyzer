@@ -1,10 +1,7 @@
 import SPELLS from 'common/SPELLS';
 import EventLinkNormalizer, { EventLink } from 'parser/core/EventLinkNormalizer';
 import { Options } from 'parser/core/Module';
-import { TALENTS_EVOKER } from 'common/TALENTS';
 import {
-  ApplyBuffEvent,
-  ApplyBuffStackEvent,
   CastEvent,
   DamageEvent,
   EventType,
@@ -12,15 +9,10 @@ import {
   GetRelatedEvents,
   HasRelatedEvent,
   HealEvent,
-  RefreshBuffEvent,
   RemoveBuffEvent,
   AnyEvent,
 } from 'parser/core/Events';
-import {
-  EB_FROM_PRESCIENCE,
-  PUPIL_OF_ALEXSTRASZA_LINK,
-} from 'analysis/retail/evoker/augmentation/modules/normalizers/CastLinkNormalizer';
-import { EB_FROM_ARCANE_VIGOR } from 'analysis/retail/evoker/devastation/modules/normalizers/CastLinkNormalizer';
+import { PUPIL_OF_ALEXSTRASZA_LINK } from 'analysis/retail/evoker/augmentation/modules/normalizers/CastLinkNormalizer';
 import SPECS from 'game/SPECS';
 
 export const LEAPING_FLAMES_HITS = 'leapingFlamesHits';
@@ -34,15 +26,7 @@ export const EB_FROM_LF_CAST = 'ebFromLFCast';
 export const EB_FROM_LF_HEAL = 'ebFromLFHeal';
 export const EB_WASTE_FROM_LF_CAST = 'ebWasteFromLFCast';
 export const EB_WASTE_FROM_LF_HEAL = 'ebWasteFromLFHeal';
-const ESSENCE_BURST_BUFFER = 40; // Sometimes the EB comes a bit early/late
 const BACKWARDS_BUFFER = 10;
-
-const essenceBurstIds = [
-  TALENTS_EVOKER.RUBY_ESSENCE_BURST_TALENT.id,
-  SPELLS.ESSENCE_BURST_BUFF.id,
-  SPELLS.ESSENCE_BURST_DEV_BUFF.id,
-  SPELLS.ESSENCE_BURST_AUGMENTATION_BUFF.id,
-];
 
 const EVENT_LINKS: EventLink[] = [
   {
@@ -59,7 +43,7 @@ const EVENT_LINKS: EventLink[] = [
   {
     linkRelation: LIVING_FLAME_CAST_HIT,
     reverseLinkRelation: LIVING_FLAME_CAST_HIT,
-    linkingEventId: [SPELLS.LIVING_FLAME_CAST.id, 361509],
+    linkingEventId: SPELLS.LIVING_FLAME_CAST.id,
     linkingEventType: EventType.Cast,
     referencedEventId: [SPELLS.LIVING_FLAME_DAMAGE.id, SPELLS.LIVING_FLAME_HEAL.id],
     referencedEventType: [EventType.Damage, EventType.Heal],
@@ -97,44 +81,6 @@ const EVENT_LINKS: EventLink[] = [
       );
     },
   },
-  /** Damage hits will always proc EB on cast instead of on hit
-   * Heal hits will close to always proc EB on hit, but sometimes it also happens on cast */
-  {
-    linkRelation: EB_FROM_LF_CAST,
-    reverseLinkRelation: EB_FROM_LF_CAST,
-    linkingEventId: SPELLS.LIVING_FLAME_CAST.id,
-    linkingEventType: EventType.Cast,
-    referencedEventId: essenceBurstIds,
-    referencedEventType: [EventType.ApplyBuff, EventType.ApplyBuffStack, EventType.RefreshBuff],
-    forwardBufferMs: ESSENCE_BURST_BUFFER,
-    backwardBufferMs: ESSENCE_BURST_BUFFER,
-    anyTarget: true,
-    additionalCondition(_linkingEvent, referencedEvent) {
-      return (
-        !HasRelatedEvent(referencedEvent, EB_FROM_ARCANE_VIGOR) &&
-        !HasRelatedEvent(referencedEvent, EB_FROM_PRESCIENCE)
-      );
-    },
-  },
-  {
-    linkRelation: EB_FROM_LF_HEAL,
-    reverseLinkRelation: EB_FROM_LF_HEAL,
-    linkingEventId: SPELLS.LIVING_FLAME_HEAL.id,
-    linkingEventType: EventType.Heal,
-    referencedEventId: essenceBurstIds,
-    referencedEventType: [EventType.ApplyBuff, EventType.ApplyBuffStack, EventType.RefreshBuff],
-    anyTarget: true,
-    forwardBufferMs: ESSENCE_BURST_BUFFER,
-    backwardBufferMs: BACKWARDS_BUFFER,
-    maximumLinks: 1,
-    additionalCondition(linkingEvent, referencedEvent) {
-      return (
-        !HasRelatedEvent(referencedEvent, EB_FROM_ARCANE_VIGOR) &&
-        !HasRelatedEvent(referencedEvent, EB_FROM_PRESCIENCE) &&
-        (linkingEvent as HealEvent).amount > 0 // Only effective heals can generated EB
-      );
-    },
-  },
 ];
 
 class LeapingFlamesNormalizer extends EventLinkNormalizer {
@@ -156,12 +102,6 @@ class LeapingFlamesNormalizer extends EventLinkNormalizer {
     }
   }
 }
-
-const generatedEBFilter: (e: AnyEvent) => boolean = (e) =>
-  e.type === EventType.ApplyBuff || e.type === EventType.ApplyBuffStack;
-
-const wastedEBFilter: (e: AnyEvent) => boolean = (e) => e.type === EventType.RefreshBuff;
-
 export function getLeapingEvents<T extends EventType.Damage | EventType.Heal>(
   event: CastEvent,
   filter?: T,
@@ -174,79 +114,12 @@ export function getLeapingEvents<T extends EventType.Damage | EventType.Heal>(
 
   return events;
 }
-
-export function getGeneratedEBEvents(event: CastEvent): (ApplyBuffEvent | ApplyBuffStackEvent)[] {
-  const ebEvents: (ApplyBuffEvent | ApplyBuffStackEvent)[] = GetRelatedEvents(
-    event,
-    EB_FROM_LF_CAST,
-    generatedEBFilter,
-  );
-
-  const healEBEvents = getLeapingEvents(event, EventType.Heal).flatMap((leapingEvent) => {
-    return GetRelatedEvents<ApplyBuffEvent | ApplyBuffStackEvent>(
-      leapingEvent,
-      EB_FROM_LF_HEAL,
-      generatedEBFilter,
-    );
-  });
-
-  // Due to how we handle figuring out EB sources we could return multiple entries of the same event
-  const uniqueEvents = new Set([...ebEvents, ...healEBEvents]);
-  return Array.from(uniqueEvents);
-}
-
-export function getWastedEBEvents(event: CastEvent): RefreshBuffEvent[] {
-  const ebEvents: RefreshBuffEvent[] = GetRelatedEvents(event, EB_FROM_LF_CAST, wastedEBFilter);
-
-  const healEBEvents = getLeapingEvents(event, EventType.Heal).flatMap((leapingEvent) => {
-    return GetRelatedEvents<RefreshBuffEvent>(leapingEvent, EB_FROM_LF_HEAL, wastedEBFilter);
-  });
-
-  // Due to how we handle figuring out EB sources we could return multiple entries of the same event
-  const uniqueEvents = new Set([...ebEvents, ...healEBEvents]);
-  return Array.from(uniqueEvents);
-}
-
 export function getLivingFlameCastHit(event: CastEvent): HealEvent | DamageEvent | undefined {
   return GetRelatedEvent(
     event,
     LIVING_FLAME_CAST_HIT,
     (e): e is HealEvent | DamageEvent => e.type === EventType.Heal || e.type === EventType.Damage,
   );
-}
-
-export type EBSources = 'Heal' | 'Cast' | 'Unknown';
-export function getEBSource(
-  event: ApplyBuffEvent | ApplyBuffStackEvent | RefreshBuffEvent,
-): EBSources {
-  const isFromHeal =
-    HasRelatedEvent(event, EB_FROM_LF_HEAL) || HasRelatedEvent(event, EB_WASTE_FROM_LF_HEAL);
-  const isFromCast =
-    HasRelatedEvent(event, EB_FROM_LF_CAST) || HasRelatedEvent(event, EB_WASTE_FROM_LF_CAST);
-
-  if (isFromHeal && !isFromCast) {
-    return 'Heal';
-  }
-  if (isFromCast && !isFromHeal) {
-    return 'Cast';
-  }
-  return 'Unknown';
-}
-
-export function eventWastedEB(event: DamageEvent | HealEvent | CastEvent) {
-  const maybeWasted = Boolean(
-    GetRelatedEvent(event, EB_FROM_LF_HEAL, wastedEBFilter) ||
-      GetRelatedEvent(event, EB_FROM_LF_CAST, wastedEBFilter),
-  );
-  return maybeWasted;
-}
-
-export function eventGeneratedEB(event: DamageEvent | HealEvent | CastEvent) {
-  const maybeGenerated = Boolean(
-    GetRelatedEvent(event, EB_FROM_LF_HEAL, generatedEBFilter) ||
-      GetRelatedEvent(event, EB_FROM_LF_CAST, generatedEBFilter),
-  );
-  return maybeGenerated;
 }
 
 export function isFromLeapingFlames(event: CastEvent | DamageEvent | HealEvent) {
