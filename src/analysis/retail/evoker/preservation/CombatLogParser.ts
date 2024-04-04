@@ -52,13 +52,13 @@ import {
   LivingFlameNormalizer,
   LivingFlamePrePullNormalizer,
   LeapingFlamesNormalizer,
+  EBRefreshNormalizer,
   LeapingFlames,
   SpellEssenceCost,
   EssenceTracker,
   SourceOfMagic,
   PotentMana,
 } from '../shared';
-import EBRefreshNormalizer from './normalizers/EBRefreshNormalizer';
 
 class CombatLogParser extends CoreCombatLogParser {
   static specModules = {
