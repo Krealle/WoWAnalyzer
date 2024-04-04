@@ -166,6 +166,9 @@ const EVENT_LINKS: EventLink[] = [
     anyTarget: true,
     maximumLinks: 1,
     forwardBufferMs: PUPIL_OF_ALEXSTRASZA_BUFFER,
+    isActive(c) {
+      return c.hasTalent(TALENTS.PUPIL_OF_ALEXSTRASZA_TALENT);
+    },
     additionalCondition(linkingEvent, referencedEvent) {
       // No targets so we can't be sure which hit is the correct one, so we just claim it
       if (!HasTarget(linkingEvent) && !HasTarget(referencedEvent)) {
