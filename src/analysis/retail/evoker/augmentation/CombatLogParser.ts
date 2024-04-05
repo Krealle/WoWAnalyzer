@@ -36,6 +36,8 @@ import T31Augmentation4P from './modules/dragonflight/T31Augmentation4P';
 
 //Shared
 import {
+  LivingFlameNormalizer,
+  LivingFlamePrePullNormalizer,
   LeapingFlamesNormalizer,
   LeapingFlames,
   SpellEssenceCost,
@@ -43,11 +45,18 @@ import {
   EssenceGraph,
   SourceOfMagic,
   PotentMana,
+  ObsidianScales,
+  DefensiveNormalizer,
+  DefensiveCastLinkNormalizer,
+  TwinGuardian,
+  RenewingBlaze,
 } from 'analysis/retail/evoker/shared';
 
 class CombatLogParser extends MainCombatLogParser {
   static specModules = {
     // Shared
+    livingFlameNormalizer: LivingFlameNormalizer,
+    livingFlamePrePullNormalizer: LivingFlamePrePullNormalizer,
     leapingFlamesNormalizer: LeapingFlamesNormalizer,
     leapingFlames: LeapingFlames,
     spellEssenceCost: SpellEssenceCost,
@@ -55,6 +64,12 @@ class CombatLogParser extends MainCombatLogParser {
     essenceGraph: EssenceGraph,
     sourceOfMagic: SourceOfMagic,
     potentMana: PotentMana,
+
+    obsidianScales: ObsidianScales,
+    defensiveCastLinkNormalizer: DefensiveCastLinkNormalizer,
+    defensiveNormalizer: DefensiveNormalizer,
+    twinGuardian: TwinGuardian,
+    renewingBlaze: RenewingBlaze,
 
     // Normalizers
     castLinkNormalizer: CastLinkNormalizer,
