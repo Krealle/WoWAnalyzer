@@ -8,7 +8,7 @@ const MAX_DELAY = 25;
  * When an EB stack is removed, a refresh buff event is generated.
  * This normalizer removes the refresh event because it messes up analysis.
  */
-class EBRefreshNormalizer extends EventsNormalizer {
+class EssenceBurstRefreshNormalizer extends EventsNormalizer {
   isEbEvent(event: AnyEvent) {
     return (
       (event.type === EventType.RemoveBuffStack || event.type === EventType.RefreshBuff) &&
@@ -49,4 +49,4 @@ class EBRefreshNormalizer extends EventsNormalizer {
     return fixedEvents;
   }
 }
-export default EBRefreshNormalizer;
+export default EssenceBurstRefreshNormalizer;
