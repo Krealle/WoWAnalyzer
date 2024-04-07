@@ -19,7 +19,7 @@ import Soup from 'interface/icons/Soup';
 import { SpellLink } from 'interface';
 import { InformationIcon, WarningIcon } from 'interface/icons';
 import {
-  EBSources,
+  EBSource,
   eventGeneratedEB,
   eventWastedEB,
   getGeneratedEBEvents,
@@ -113,8 +113,8 @@ class LeapingFlames extends Analyzer {
       { damageHits: 0, healHits: 0 },
     );
 
-    const generatedEB = getGeneratedEBEvents(lfCast, EBSources.LivingFlameCast);
-    const wastedEB = getWastedEBEvents(lfCast, EBSources.LivingFlameCast);
+    const generatedEB = getGeneratedEBEvents(lfCast, EBSource.LivingFlameCast);
+    const wastedEB = getWastedEBEvents(lfCast, EBSource.LivingFlameCast);
     if (!generatedEB.length && !wastedEB.length) {
       // potentially you don't bail here if you want to show expected vs actual procs
       console.log('no EBs');
@@ -131,7 +131,7 @@ class LeapingFlames extends Analyzer {
         /* const ebSource = getEBSource(event); */
         const isWaste = event.type === EventType.RefreshBuff;
 
-        const isFromHeal = isEBFrom(event, EBSources.LivingFlameHeal);
+        const isFromHeal = isEBFrom(event, EBSource.LivingFlameHeal);
 
         if (isFromHeal) {
           if (isWaste) {

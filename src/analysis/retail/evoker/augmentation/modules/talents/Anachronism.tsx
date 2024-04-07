@@ -12,7 +12,7 @@ import TalentSpellText from 'parser/ui/TalentSpellText';
 import { SpellLink } from 'interface';
 import { plotOneVariableBinomChart } from 'parser/shared/modules/helpers/Probability';
 import {
-  EBSources,
+  EBSource,
   eventGeneratedEB,
 } from '../../../shared/modules/normalizers/EssenceBurstCastLinkNormalizer';
 
@@ -35,7 +35,7 @@ class Anachronism extends Analyzer {
 
   onCast(event: CastEvent) {
     this.prescienceCasts += 1;
-    if (eventGeneratedEB(event, EBSources.Prescience)) {
+    if (eventGeneratedEB(event, EBSource.Prescience)) {
       this.essenceBurstGenerated += 1;
     }
   }
