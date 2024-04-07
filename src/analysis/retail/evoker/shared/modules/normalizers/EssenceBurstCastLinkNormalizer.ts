@@ -40,6 +40,22 @@ const ESSENCE_BURST_BUFFER = 40; // Sometimes the EB comes a bit early/late
 const EB_LF_CAST_BUFFER = 1000;
 const EMERALD_TRANCE_BUFFER = 5000;
 
+/** More deterministic links should be placed above less deterministic links
+ * eg.
+ * Arcane Vigor from Devastation makes Shattering Star casts produce a guaranteed EB.
+ *
+ * Whilst Living Flame has a chance to produce an EB on cast/heal hits, which shouldn't inherently be a problem,
+ * but due to LF having travel time and how the EB calculation for it works the damage procced EB will always
+ * come on cast, but the heal hits will come on the actual hits (sometimes it will proc on cast even when there is travel time).
+ * There are also talents/tier sets that produce extra LFs which only makes it harder to specify the exact source.
+ *
+ * examples:
+ * 1. LF Heal hit lands just as you use Shattering Star, generating an EB that potentially could be from both.
+ *    In this example Arcane Vigor makes the EB gen 100% and as such would take precedence.
+ *    Any subsequent EB would then be attributed to the LF hit.
+ * 2. Devastation T31 4pc generates an EB every 5 seconds after Dragonrage ends.
+ *    In this example the EB could land within our EB_FROM_LF_CAST search and be incorrectly attributed.
+ */
 const EVENT_LINKS: EventLink[] = [
   {
     linkRelation: EB_FROM_ARCANE_VIGOR,
@@ -280,36 +296,10 @@ export function eventWastedEB(event: AnyEvent, source?: EBSourceType) {
   return Boolean(getWastedEBEvents(event, source).length);
 }
 
-/** More deterministic links should be placed above less deterministic links and be added to this filter
- * eg.
- * Arcane Vigor from Devastation makes Shattering Star casts produce a guaranteed EB.
- *
- * Whilst Living Flame has a chance to produce an EB on cast/heal hits, which shouldn't inherently be a problem,
- * but due to LF having travel time and how the EB calculation for it works the damage procced EB will always
- * come on cast, but the heal hits will come on the actual hits (sometimes it will proc on cast even when there is travel time).
- * There are also talents/tier sets that produce extra LFs which only makes it harder to specify the exact source.
- *
- * examples:
- * 1. LF Heal hit lands just as you use Shattering Star, generating an EB that potentially could be from both.
- *    In this example Arcane Vigor makes the EB gen 100% and as such would take precedence.
- *    Any subsequent EB would then be attributed to the LF hit.
- * 2. Devastation T31 4pc generates an EB every 5 seconds after Dragonrage ends.
- *    In this example the EB could land within our EB_FROM_LF_CAST search and be incorrectly attributed.
- *
- * Therefore to ensure proper link association, you would place the Arcane Vigor link above the LF link
- * and add it to this filter.
- *
- * Note that the links from LF are not added here, this is deliberate, due to LF gen being less deterministic
- * when trying to ascertain whether the EB was from cast(damage hit) or heal hit, both could be possible.
- * And for analysis for talents such as Leaping Flames, we want to be able to tell if it could be from both. */
+/** We allow LivingFlameCast link since only our Heal hits will actually be able to meet it, and Leaping Flames relies on it. */
 function hasNoGenerationLink(event: AnyBuffEvent) {
   const curLink = getEBSource(event);
-  return (
-    curLink !== EBSource.ArcaneVigor &&
-    curLink !== EBSource.Prescience &&
-    curLink !== EBSource.AzureStrike &&
-    curLink !== EBSource.EmeraldTrance
-  );
+  return !curLink || curLink === EBSource.LivingFlameCast;
 }
 
 export default EssenceBurstCastLinkNormalizer;
