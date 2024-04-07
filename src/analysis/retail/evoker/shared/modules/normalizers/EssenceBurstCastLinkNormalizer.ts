@@ -99,7 +99,6 @@ const EVENT_LINKS: EventLink[] = [
     referencedEventType: EB_GENERATION_EVENT_TYPES,
     anyTarget: true,
     forwardBufferMs: EMERALD_TRANCE_BUFFER * 5 + ESSENCE_BURST_BUFFER,
-    backwardBufferMs: ESSENCE_BURST_BUFFER,
     maximumLinks: 5,
     isActive: (c) => {
       return c.has4PieceByTier(TIERS.DF3);
