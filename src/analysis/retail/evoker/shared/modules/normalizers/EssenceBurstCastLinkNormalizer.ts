@@ -70,27 +70,6 @@ const EVENT_LINKS: EventLink[] = [
     isActive: (c) => c.hasTalent(TALENTS.ANACHRONISM_TALENT),
   },
   {
-    linkRelation: EB_FROM_AZURE_STRIKE,
-    reverseLinkRelation: EB_FROM_AZURE_STRIKE,
-    linkingEventId: SPELLS.AZURE_STRIKE.id,
-    linkingEventType: EventType.Cast,
-    referencedEventId: EB_BUFF_IDS,
-    referencedEventType: EB_GENERATION_EVENT_TYPES,
-    anyTarget: true,
-    forwardBufferMs: ESSENCE_BURST_BUFFER,
-    backwardBufferMs: ESSENCE_BURST_BUFFER,
-    maximumLinks: 1,
-    isActive: (c) => {
-      return (
-        c.hasTalent(TALENTS.AZURE_ESSENCE_BURST_TALENT) ||
-        c.hasTalent(TALENTS.ESSENCE_BURST_AUGMENTATION_TALENT)
-      );
-    },
-    additionalCondition(_linkingEvent, referencedEvent) {
-      return hasNoGenerationLink(referencedEvent as AnyBuffEvent);
-    },
-  },
-  {
     linkRelation: EB_FROM_EMERALD_TRANCE,
     reverseLinkRelation: EB_FROM_EMERALD_TRANCE,
     linkingEventId: SPELLS.EMERALD_TRANCE_T31_4PC_BUFF.id,
@@ -116,6 +95,27 @@ const EVENT_LINKS: EventLink[] = [
         return false;
       }
 
+      return hasNoGenerationLink(referencedEvent as AnyBuffEvent);
+    },
+  },
+  {
+    linkRelation: EB_FROM_AZURE_STRIKE,
+    reverseLinkRelation: EB_FROM_AZURE_STRIKE,
+    linkingEventId: SPELLS.AZURE_STRIKE.id,
+    linkingEventType: EventType.Cast,
+    referencedEventId: EB_BUFF_IDS,
+    referencedEventType: EB_GENERATION_EVENT_TYPES,
+    anyTarget: true,
+    forwardBufferMs: ESSENCE_BURST_BUFFER,
+    backwardBufferMs: ESSENCE_BURST_BUFFER,
+    maximumLinks: 1,
+    isActive: (c) => {
+      return (
+        c.hasTalent(TALENTS.AZURE_ESSENCE_BURST_TALENT) ||
+        c.hasTalent(TALENTS.ESSENCE_BURST_AUGMENTATION_TALENT)
+      );
+    },
+    additionalCondition(_linkingEvent, referencedEvent) {
       return hasNoGenerationLink(referencedEvent as AnyBuffEvent);
     },
   },
