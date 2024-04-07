@@ -17,6 +17,8 @@ import {
 import { Options } from 'parser/core/Module';
 import EventLinkNormalizer, { EventLink } from 'parser/core/EventLinkNormalizer';
 import { encodeEventTargetString } from 'parser/shared/modules/Enemies';
+import PrePullCooldowns from 'parser/shared/normalizers/PrePullCooldowns';
+import { LEAPING_FLAMES_HITS } from 'analysis/retail/evoker/shared/modules/normalizers/LeapingFlamesNormalizer';
 
 /** So sometimes when Ebon Might should be extended
  * it just kinda doesn't? This messes with our analysis so
@@ -174,7 +176,10 @@ const EVENT_LINKS: EventLink[] = [
       if (!HasTarget(linkingEvent) && !HasTarget(referencedEvent)) {
         return true;
       }
-      return encodeEventTargetString(linkingEvent) !== encodeEventTargetString(referencedEvent);
+      return (
+        encodeEventTargetString(linkingEvent) !== encodeEventTargetString(referencedEvent) &&
+        !HasRelatedEvent(referencedEvent, LEAPING_FLAMES_HITS)
+      );
     },
   },
   {
@@ -238,12 +243,12 @@ const EVENT_LINKS: EventLink[] = [
 ];
 
 class CastLinkNormalizer extends EventLinkNormalizer {
-  // This is set to lower priority than default since
+  // We depend on prePullCooldowns since
   // to create proper links on events fabricated using PrePullCooldownsNormalizer
-  // We need to ensure this runs after the PrePullCooldownsNormalizer
+  // We need to ensure this normalizer runs after the PrePullCooldownsNormalizer
   // This is necessary if we want BreathOfEons module to function properly
   // With pre-pull casts of Breath of Eons
-  priority = 100;
+  static dependencies = { ...EventLinkNormalizer.dependencies, prePullCooldowns: PrePullCooldowns };
   constructor(options: Options) {
     super(options, EVENT_LINKS);
   }

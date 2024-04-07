@@ -12,8 +12,7 @@ import {
   RemoveBuffEvent,
   AnyEvent,
 } from 'parser/core/Events';
-import { PUPIL_OF_ALEXSTRASZA_LINK } from 'analysis/retail/evoker/augmentation/modules/normalizers/CastLinkNormalizer';
-import SPECS from 'game/SPECS';
+import { encodeEventTargetString } from 'parser/shared/modules/Enemies';
 
 export const LEAPING_FLAMES_HITS = 'leapingFlamesHits';
 export const LEAPING_FLAMES_CONSUME = 'leapingFlamesConsume';
@@ -75,10 +74,13 @@ const EVENT_LINKS: EventLink[] = [
         return false;
       }
 
-      return (
-        !HasRelatedEvent(referencedEvent, PUPIL_OF_ALEXSTRASZA_LINK) &&
-        !HasRelatedEvent(referencedEvent, LIVING_FLAME_CAST_HIT)
+      const previousLeapingHits = getLeapingEvents(linkingEvent as CastEvent);
+      const curTarget = encodeEventTargetString(referencedEvent);
+      const targetHitBefore = previousLeapingHits.some(
+        (prevEvent) => encodeEventTargetString(prevEvent) === curTarget,
       );
+
+      return !HasRelatedEvent(referencedEvent, LIVING_FLAME_CAST_HIT) && !targetHitBefore;
     },
   },
 ];
@@ -86,20 +88,6 @@ const EVENT_LINKS: EventLink[] = [
 class LeapingFlamesNormalizer extends EventLinkNormalizer {
   constructor(options: Options) {
     super(options, EVENT_LINKS);
-
-    /** To more easily avoid adding extra unwanted links for what generated an EB
-     * we need to make sure that this normalizer runs after Devas and Augs CastLinkNormalizers
-     * This is due to us defining EB sources from talents such as Arcane Vigor and Anachronism
-     * I think a more ideal solution in the long term is to make a shared EB normalizer so we
-     * wouldn't need to worry about setting priority and could set a dependency directly
-     * (we can't set dependencies to the different normalizers since we will only ever run one of them)
-     *
-     * Preservation CastLinkNormalizer relies on the links set in this normalizer so we don't
-     * change the priority for them */
-    const curSpec = this.selectedCombatant.spec;
-    if (curSpec === SPECS.DEVASTATION_EVOKER || curSpec === SPECS.AUGMENTATION_EVOKER) {
-      this.priority = 101;
-    }
   }
 }
 export function getLeapingEvents<T extends EventType.Damage | EventType.Heal>(
