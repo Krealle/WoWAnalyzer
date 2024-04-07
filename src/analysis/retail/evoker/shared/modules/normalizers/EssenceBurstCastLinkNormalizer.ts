@@ -17,6 +17,7 @@ import {
 } from 'parser/core/Events';
 import { Options } from 'parser/core/Module';
 import { EB_BUFF_IDS } from '../../constants';
+import { TIERS } from 'game/TIERS';
 
 export const EB_GENERATION_EVENT_TYPES = [
   EventType.RefreshBuff,
@@ -30,12 +31,15 @@ type AnyBuffEvent =
   | RemoveBuffEvent
   | RemoveBuffStackEvent;
 
+export const EB_FROM_EMERALD_TRANCE = 'ebFromEmeraldTrance';
+export const EB_FROM_AZURE_STRIKE = 'ebFromAzureStrike';
 export const EB_FROM_PRESCIENCE = 'ebFromPrescience';
 export const EB_FROM_ARCANE_VIGOR = 'ebFromArcaneVigor';
 export const EB_FROM_LF_CAST = 'ebFromLFCast';
 export const EB_FROM_LF_HEAL = 'ebFromLFHeal'; // Specifically used for Leaping Flames analysis
 const ESSENCE_BURST_BUFFER = 40; // Sometimes the EB comes a bit early/late
 const EB_LF_CAST_BUFFER = 1000;
+const EMERALD_TRANCE_BUFFER = 5000;
 
 const EVENT_LINKS: EventLink[] = [
   {
@@ -65,6 +69,57 @@ const EVENT_LINKS: EventLink[] = [
     backwardBufferMs: ESSENCE_BURST_BUFFER,
     maximumLinks: 1,
     isActive: (c) => c.hasTalent(TALENTS.ANACHRONISM_TALENT),
+  },
+  {
+    linkRelation: EB_FROM_AZURE_STRIKE,
+    reverseLinkRelation: EB_FROM_AZURE_STRIKE,
+    linkingEventId: SPELLS.AZURE_STRIKE.id,
+    linkingEventType: EventType.Cast,
+    referencedEventId: EB_BUFF_IDS,
+    referencedEventType: EB_GENERATION_EVENT_TYPES,
+    anyTarget: true,
+    forwardBufferMs: ESSENCE_BURST_BUFFER,
+    backwardBufferMs: ESSENCE_BURST_BUFFER,
+    maximumLinks: 1,
+    isActive: (c) => {
+      return (
+        c.hasTalent(TALENTS.AZURE_ESSENCE_BURST_TALENT) ||
+        c.hasTalent(TALENTS.ESSENCE_BURST_AUGMENTATION_TALENT)
+      );
+    },
+    additionalCondition(_linkingEvent, referencedEvent) {
+      return hasNoGenerationLink(referencedEvent as AnyBuffEvent);
+    },
+  },
+  {
+    linkRelation: EB_FROM_EMERALD_TRANCE,
+    reverseLinkRelation: EB_FROM_EMERALD_TRANCE,
+    linkingEventId: SPELLS.EMERALD_TRANCE_T31_4PC_BUFF.id,
+    linkingEventType: EventType.ApplyBuff,
+    referencedEventId: EB_BUFF_IDS,
+    referencedEventType: EB_GENERATION_EVENT_TYPES,
+    anyTarget: true,
+    forwardBufferMs: EMERALD_TRANCE_BUFFER * 5 + ESSENCE_BURST_BUFFER,
+    backwardBufferMs: ESSENCE_BURST_BUFFER,
+    maximumLinks: 5,
+    isActive: (c) => {
+      return c.has4PieceByTier(TIERS.DF3);
+    },
+    additionalCondition(linkingEvent, referencedEvent) {
+      // applies one EB each 5000 ms for the duration of the buff (25000ms)
+      // so check if the timestamp difference is divisible by 5000 allowing the remainder to be withing the ESSENCE_BURST_BUFFER range
+      const timeDiff = Math.abs(
+        (linkingEvent.timestamp - referencedEvent.timestamp) % EMERALD_TRANCE_BUFFER,
+      );
+      if (
+        timeDiff > ESSENCE_BURST_BUFFER &&
+        EMERALD_TRANCE_BUFFER - timeDiff > ESSENCE_BURST_BUFFER // it can come early
+      ) {
+        return false;
+      }
+
+      return hasNoGenerationLink(referencedEvent as AnyBuffEvent);
+    },
   },
   {
     linkRelation: EB_FROM_LF_CAST,
@@ -153,6 +208,8 @@ const EVENT_LINKS: EventLink[] = [
 export const EBSources = {
   Prescience: EB_FROM_PRESCIENCE,
   ArcaneVigor: EB_FROM_ARCANE_VIGOR,
+  EmeraldTrance: EB_FROM_EMERALD_TRANCE,
+  AzureStrike: EB_FROM_AZURE_STRIKE,
   LivingFlameCast: EB_FROM_LF_CAST,
   LivingFlameHeal: EB_FROM_LF_HEAL,
 } as const;
