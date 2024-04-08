@@ -8,4 +8,6 @@ export const POTENT_MANA_MULTIPLIER = 0.03;
 
 export const BASE_EVOKER_RANGE = 25;
 
-export const dummy_change = 10;
+export const dummy_change = 20;
+
+export const second_dummy_change = 10;
