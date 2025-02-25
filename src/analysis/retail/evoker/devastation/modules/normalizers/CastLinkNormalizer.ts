@@ -298,7 +298,7 @@ export function getDisintegrateDamageEvents(event: CastEvent): DamageEvent[] {
   const damageEvents = debuffEvents.map((debuffEvent) =>
     GetRelatedEvents<DamageEvent>(debuffEvent, DISINTEGRATE_DEBUFF_TICK_LINK),
   );
-  return damageEvents.flat();
+  return damageEvents.flat().sort((a, b) => a.timestamp - b.timestamp);
 }
 
 export function isFromMassDisintegrate(event: CastEvent) {
