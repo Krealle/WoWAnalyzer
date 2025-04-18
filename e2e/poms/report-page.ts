@@ -77,7 +77,7 @@ export class ReportPage {
 
   async gotoUrl({
     reportUrl,
-    handleExpansionChecker = true,
+    handleExpansionChecker = false,
     handlePatchChecker = true,
     handlePartial = true,
     waitForLoadingToFinish = true,
@@ -96,7 +96,7 @@ export class ReportPage {
 
   /** Handles the "Continue anyway" dialogs */
   async handleReportChecker(
-    handleExpansionChecker = true,
+    handleExpansionChecker = false,
     handlePatchChecker = true,
     handlePartial = true,
     waitForLoadingToFinish = true,
