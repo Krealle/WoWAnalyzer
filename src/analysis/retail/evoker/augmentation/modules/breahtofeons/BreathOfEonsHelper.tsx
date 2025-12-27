@@ -307,14 +307,11 @@ const BreathOfEonsHelper: FC<Props> = ({ windows, fightStartTime, fightEndTime, 
           }
         }
 
-        const sortedSourceSums: DamageSources[] = sortDamageSources(sourceSums);
-        const currentWindowSum = sortedSourceSums.reduce((a, b) => a + b.damage, 0);
-
         damageWindows.push({
           start: recentDamage[0].timestamp,
           end: recentDamage[0].timestamp + breathLength,
-          sum: currentWindowSum,
-          sumSources: sortedSourceSums,
+          sum: sourceSums.reduce((a, b) => a + b.damage, 0),
+          sumSources: sourceSums.sort((a, b) => b.damage - a.damage),
           startFormat: formatDuration(recentDamage[0].timestamp - fightStartTime),
           endFormat: formatDuration(recentDamage[0].timestamp + breathLength - fightStartTime),
         });
@@ -323,11 +320,8 @@ const BreathOfEonsHelper: FC<Props> = ({ windows, fightStartTime, fightEndTime, 
       }
     }
 
-    const sortedSourceInRange: DamageSources[] = sortDamageSources(sourceInRange);
-
     const sortedWindows = damageWindows.sort((a, b) => b.sum - a.sum);
     const topWindow = sortedWindows[0];
-
     const damageToDisplay = damageInRange - earlyDeadMobsDamage;
 
     if (debug) {
@@ -352,7 +346,11 @@ const BreathOfEonsHelper: FC<Props> = ({ windows, fightStartTime, fightEndTime, 
         'source:',
         sourceInRange.sort((a, b) => b.damage - a.damage),
       );
-      console.log(windowIndex + 1 + '.', 'sorted source:', sortedSourceInRange);
+      console.log(
+        windowIndex + 1 + '.',
+        'sorted source:',
+        sourceInRange.sort((a, b) => b.damage - a.damage),
+      );
       console.log(windowIndex + 1 + '.', 'damage lost to ebon drop:', lostDamage);
       console.log(windowIndex + 1 + '.', 'damage lost to early mob deaths:', earlyDeadMobsDamage);
     }
@@ -365,12 +363,8 @@ const BreathOfEonsHelper: FC<Props> = ({ windows, fightStartTime, fightEndTime, 
       breathEnd,
       damageToDisplay,
       topWindow,
-      sourceInRange: sortedSourceInRange,
+      sourceInRange: sourceInRange.sort((a, b) => b.damage - a.damage),
     };
-  }
-
-  function sortDamageSources(damageSources: DamageSources[]) {
-    return damageSources.sort((a, b) => b.damage - a.damage);
   }
 
   function generateGraphDataForWindow(
