@@ -18,7 +18,6 @@ import ExplanationGraph, {
 import DonutChart from 'parser/ui/DonutChart';
 import { PlayerInfo } from 'parser/core/Player';
 import { DamageEvent } from 'parser/core/Events';
-import { BREATH_OF_EONS_MULTIPLIER } from '../../constants';
 import {
   ABILITY_BLACKLIST,
   ABILITY_NO_BOE_SCALING,
