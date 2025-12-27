@@ -51,6 +51,9 @@ interface DamageWindow {
   sumSources: DamageSources[];
 }
 
+/** Range to search for other windows */
+const WINDOW_BUFFER_RANGE_MS = 4000;
+
 interface DamageSources {
   sourceID: number;
   damage: number;
@@ -91,14 +94,12 @@ const BreathOfEonsHelper: FC<Props> = ({ windows, fightStartTime, fightEndTime, 
     return filter;
   }, []);
 
-  const buffer = 4000;
-
   async function loadData() {
     const fetchPromises: Promise<WindowResponse>[] = [];
 
     for (const window of windows) {
-      const start = Math.max(window.start - buffer, fightStartTime);
-      const end = Math.min(window.end + buffer, fightEndTime);
+      const start = Math.max(window.start - WINDOW_BUFFER_RANGE_MS, fightStartTime);
+      const end = Math.min(window.end + WINDOW_BUFFER_RANGE_MS, fightEndTime);
 
       fetchPromises.push(getEvents(start, end, filter, owner.report.code));
     }
@@ -417,8 +418,8 @@ const BreathOfEonsHelper: FC<Props> = ({ windows, fightStartTime, fightEndTime, 
 
     const newGraphData = generateGraphData(
       dataSeries,
-      breathStart - buffer,
-      breathEnd + buffer,
+      breathStart - WINDOW_BUFFER_RANGE_MS,
+      breathEnd + WINDOW_BUFFER_RANGE_MS,
       'Breath Window',
       !topWindow ? <>You didn't hit anything.</> : undefined,
     );
