@@ -72,10 +72,11 @@ const BreathOfEonsHelper: FC<Props> = ({ windows, fightStartTime, fightEndTime, 
   }[] = [];
 
   /** Generate filter so we only get class abilities
-   * that can accumulate into BoE */
+   * that can accumulate into BoE
+   * TODO: this can and should be optimized */
   const filter = useMemo(() => {
     const filter = `type = "damage" 
-    AND (source.role = "ranged" or source.role = "melee")
+    AND not (source.role = "tank" or source.role = "healer")
     AND (target.id != source.id)
     AND target.id not in(169428, 169430, 169429, 169426, 169421, 169425, 168932)
     AND not (target.id = source.owner.id)
