@@ -299,11 +299,6 @@ const BreathOfEonsHelper: FC<Props> = ({ windows, fightStartTime, fightEndTime, 
         const sourceSums: DamageSources[] = [];
 
         for (const eventWithinWindow of eventsWithinWindow) {
-          /** These shouldn't show up but just incase */
-          if (eventWithinWindow.subtractsFromSupportedActor) {
-            continue;
-          }
-
           const sourceID =
             (pets.includes(eventWithinWindow.sourceID ?? -1)
               ? petToPlayerMap.get(eventWithinWindow.sourceID ?? -1)
