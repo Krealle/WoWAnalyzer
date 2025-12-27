@@ -239,8 +239,6 @@ const BreathOfEonsHelper: FC<Props> = ({ windows, fightStartTime, fightEndTime, 
     const breathEnd = windowData.end;
     const breathLength = breathEnd - breathStart;
 
-    const buffedPlayers = Array.from(windowData.breathPerformance.buffedPlayers.values());
-
     const mobsToIgnore = windowData.breathPerformance.earlyDeadMobs.reduce(
       (acc, mob) => acc.add(encodeEventTargetString(mob)),
       new Set<string>(),
@@ -257,31 +255,25 @@ const BreathOfEonsHelper: FC<Props> = ({ windows, fightStartTime, fightEndTime, 
             ? petToPlayerMap.get(event.sourceID ?? -1)
             : event.sourceID) ?? -1;
 
-        /** If not from buffed players or player ignore */
+        const damageAmount = event.amount + (event.absorbed ?? 0);
+
+        const index = sourceInRange.findIndex((sum) => sum.sourceID === sourceID);
+        if (index !== -1) {
+          sourceInRange[index].damage += damageAmount;
+        } else {
+          sourceInRange.push({ sourceID: sourceID, damage: damageAmount, lostDamage: 0 });
+        }
+
         if (
-          sourceID === buffedPlayers.find((player) => player.id === sourceID)?.id ||
-          sourceID === owner.selectedCombatant.id
+          event.timestamp >= ebonMightDropTimestamp &&
+          event.timestamp <= ebonMightReappliedTimestamp
         ) {
-          const damageAmount = event.amount + (event.absorbed ?? 0);
+          lostDamage += damageAmount;
+        }
+        damageInRange += damageAmount;
 
-          const index = sourceInRange.findIndex((sum) => sum.sourceID === sourceID);
-          if (index !== -1) {
-            sourceInRange[index].damage += damageAmount;
-          } else {
-            sourceInRange.push({ sourceID: sourceID, damage: damageAmount, lostDamage: 0 });
-          }
-
-          if (
-            event.timestamp >= ebonMightDropTimestamp &&
-            event.timestamp <= ebonMightReappliedTimestamp
-          ) {
-            lostDamage += damageAmount;
-          }
-          damageInRange += damageAmount;
-
-          if (mobsToIgnore.has(encodeEventTargetString(event))) {
-            earlyDeadMobsDamage += damageAmount;
-          }
+        if (mobsToIgnore.has(encodeEventTargetString(event))) {
+          earlyDeadMobsDamage += damageAmount;
         }
       }
 
@@ -315,12 +307,7 @@ const BreathOfEonsHelper: FC<Props> = ({ windows, fightStartTime, fightEndTime, 
           }
         }
 
-        const filteredSourceSums = sourceSums.filter(
-          (source) =>
-            source.sourceID === buffedPlayers.find((player) => player.id === source.sourceID)?.id ||
-            source.sourceID === owner.selectedCombatant.id,
-        );
-        const sortedSourceSums: DamageSources[] = sortDamageSources(filteredSourceSums);
+        const sortedSourceSums: DamageSources[] = sortDamageSources(sourceSums);
         const currentWindowSum = sortedSourceSums.reduce((a, b) => a + b.damage, 0);
 
         damageWindows.push({
@@ -392,23 +379,7 @@ const BreathOfEonsHelper: FC<Props> = ({ windows, fightStartTime, fightEndTime, 
   }
 
   function sortDamageSources(damageSources: DamageSources[]) {
-    const playerDammies = damageSources.find(
-      (sourceID) => sourceID.sourceID === owner.selectedCombatant.id,
-    );
-
-    const sortedDamageWindow: DamageSources[] = damageSources
-      // Filter out fake entries and the player
-      .filter(
-        (sourceID) => sourceID.sourceID !== -1 && sourceID.sourceID !== owner.selectedCombatant.id,
-      )
-      .sort((a, b) => b.damage - a.damage)
-      .splice(0, 4);
-    // Add back the player (if they did damage)
-    if (playerDammies) {
-      sortedDamageWindow.push(playerDammies);
-    }
-
-    return sortedDamageWindow;
+    return damageSources.sort((a, b) => b.damage - a.damage);
   }
 
   function generateGraphDataForWindow(
