@@ -181,13 +181,11 @@ const BreathOfEonsHelper: FC<Props> = ({ windows, fightStartTime, fightEndTime, 
         breathEnd,
         damageToDisplay,
         topWindow,
-        topWindowOptimalTarget,
         sourceInRange,
       } = processWindowData(index);
 
       const newGraphData = generateGraphDataForWindow(
         topWindow,
-        topWindowOptimalTarget,
         breathStart,
         breathEnd,
         damageInRange,
@@ -196,7 +194,6 @@ const BreathOfEonsHelper: FC<Props> = ({ windows, fightStartTime, fightEndTime, 
 
       const content = generateExplanationContent(
         topWindow,
-        topWindowOptimalTarget,
         sourceInRange,
         damageToDisplay,
         damageInRange,
@@ -231,7 +228,6 @@ const BreathOfEonsHelper: FC<Props> = ({ windows, fightStartTime, fightEndTime, 
       ebonMightDropTimestamp + windowData.breathPerformance.ebonMightDroppedDuration;
 
     const damageWindows: DamageWindow[] = [];
-    const damageWindowsOptimalTargets: DamageWindow[] = [];
     const recentDamage: DamageEvent[] = [];
     const sourceInRange: DamageSources[] = [];
     let damageInRange = 0;
@@ -322,11 +318,6 @@ const BreathOfEonsHelper: FC<Props> = ({ windows, fightStartTime, fightEndTime, 
             sourceSums.push({ sourceID: sourceID, damage: damageAmount, lostDamage: 0 });
           }
         }
-        const sortedSourceSumsOptimalTargets: DamageSources[] = sortDamageSources(sourceSums);
-        const currentWindowSumOptimalTargets = sortedSourceSumsOptimalTargets.reduce(
-          (a, b) => a + b.damage,
-          0,
-        );
 
         const filteredSourceSums = sourceSums.filter(
           (source) =>
@@ -344,14 +335,6 @@ const BreathOfEonsHelper: FC<Props> = ({ windows, fightStartTime, fightEndTime, 
           startFormat: formatDuration(recentDamage[0].timestamp - fightStartTime),
           endFormat: formatDuration(recentDamage[0].timestamp + breathLength - fightStartTime),
         });
-        damageWindowsOptimalTargets.push({
-          start: recentDamage[0].timestamp,
-          end: recentDamage[0].timestamp + breathLength,
-          sum: currentWindowSumOptimalTargets,
-          sumSources: sortedSourceSumsOptimalTargets,
-          startFormat: formatDuration(recentDamage[0].timestamp - fightStartTime),
-          endFormat: formatDuration(recentDamage[0].timestamp + breathLength - fightStartTime),
-        });
 
         recentDamage.shift();
       }
@@ -361,9 +344,6 @@ const BreathOfEonsHelper: FC<Props> = ({ windows, fightStartTime, fightEndTime, 
 
     const sortedWindows = damageWindows.sort((a, b) => b.sum - a.sum);
     const topWindow = sortedWindows[0];
-
-    const sortedWindowsOptimalTargets = damageWindowsOptimalTargets.sort((a, b) => b.sum - a.sum);
-    const topWindowOptimalTarget = sortedWindowsOptimalTargets[0];
 
     /** If the damage difference between what we found and what actually happened is greater than 10%
      * we display the actual amount - this only seems to happen when a target becomes immune before
@@ -378,7 +358,6 @@ const BreathOfEonsHelper: FC<Props> = ({ windows, fightStartTime, fightEndTime, 
 
     if (debug) {
       console.log(windowIndex + 1 + '. ', 'Top Window:', topWindow);
-      console.log(windowIndex + 1 + '. ', 'Top Window optimal:', topWindowOptimalTarget);
       console.log(
         windowIndex + 1 + '.',
         'Damage within current window:',
@@ -412,7 +391,6 @@ const BreathOfEonsHelper: FC<Props> = ({ windows, fightStartTime, fightEndTime, 
       breathEnd,
       damageToDisplay,
       topWindow,
-      topWindowOptimalTarget,
       sourceInRange: sortedSourceInRange,
     };
   }
@@ -439,7 +417,6 @@ const BreathOfEonsHelper: FC<Props> = ({ windows, fightStartTime, fightEndTime, 
 
   function generateGraphDataForWindow(
     topWindow: DamageWindow,
-    topWindowOptimal: DamageWindow,
     breathStart: number,
     breathEnd: number,
     damageInRange: number,
@@ -481,36 +458,6 @@ const BreathOfEonsHelper: FC<Props> = ({ windows, fightStartTime, fightEndTime, 
           },
         ];
 
-    if (topWindow && topWindowOptimal) {
-      const optimalSources = topWindowOptimal.sumSources
-        .map((player) => player.sourceID)
-        .sort((a, b) => a - b)
-        .toString();
-      const currentSources = topWindow.sumSources
-        .map((player) => player.sourceID)
-        .sort((a, b) => a - b)
-        .toString();
-
-      if (optimalSources !== currentSources && topWindow) {
-        dataSeries.push({
-          spellTracker: [
-            {
-              timestamp: topWindowOptimal.start,
-              count: 1 * (topWindowOptimal.sum / damageInRange),
-            },
-            {
-              timestamp: topWindowOptimal.end,
-              count: 0,
-            },
-          ],
-          type: 'area',
-          color: '#88D498',
-          label: 'Optimal targets timing',
-          strokeWidth: 5,
-        });
-      }
-    }
-
     const newGraphData = generateGraphData(
       dataSeries,
       breathStart - buffer,
@@ -524,7 +471,6 @@ const BreathOfEonsHelper: FC<Props> = ({ windows, fightStartTime, fightEndTime, 
 
   function generateExplanationContent(
     topWindow: DamageWindow,
-    topWindowOptimalTargets: DamageWindow,
     inRangeSum: DamageSources[],
     damageToDisplay: number,
     damageInRange: number,
@@ -547,32 +493,6 @@ const BreathOfEonsHelper: FC<Props> = ({ windows, fightStartTime, fightEndTime, 
         valueTooltip: formatNumber(source.damage * BREATH_OF_EONS_MULTIPLIER),
         value: source.damage,
       });
-    }
-
-    const optimalSources = topWindowOptimalTargets.sumSources
-      .map((player) => player.sourceID)
-      .sort((a, b) => a - b)
-      .toString();
-    const currentSources = topWindow.sumSources
-      .map((player) => player.sourceID)
-      .sort((a, b) => a - b)
-      .toString();
-
-    const sameTargets = optimalSources === currentSources;
-
-    const damageSourcesOptimalTargets = [];
-
-    if (!sameTargets) {
-      for (let i = 0; i < topWindowOptimalTargets.sumSources.length; i += 1) {
-        const source = topWindowOptimalTargets.sumSources[i];
-        const playerInfo = playerNameMap.get(source.sourceID);
-        damageSourcesOptimalTargets.push({
-          color: colorMap[i],
-          label: playerInfo?.name,
-          valueTooltip: formatNumber(source.damage * BREATH_OF_EONS_MULTIPLIER),
-          value: source.damage,
-        });
-      }
     }
 
     const damageSourcesCurrent = [];
@@ -604,12 +524,12 @@ const BreathOfEonsHelper: FC<Props> = ({ windows, fightStartTime, fightEndTime, 
             </div>
             <div className="flex-cell">
               {formatNumber(damageToDisplay)} /{' '}
-              {formatNumber(topWindowOptimalTargets.sum * BREATH_OF_EONS_MULTIPLIER)}
+              {formatNumber(topWindow.sum * BREATH_OF_EONS_MULTIPLIER)}
             </div>
             <div className="flex-cell">
               <PassFailBar
                 pass={damageToDisplay}
-                total={topWindowOptimalTargets.sum * BREATH_OF_EONS_MULTIPLIER}
+                total={topWindow.sum * BREATH_OF_EONS_MULTIPLIER}
               />
             </div>
           </div>
@@ -624,7 +544,7 @@ const BreathOfEonsHelper: FC<Props> = ({ windows, fightStartTime, fightEndTime, 
               </TooltipElement>
             </div>
             <div className="flex-cell">
-              {Math.round(((topWindowOptimalTargets.sum - damageInRange) / damageInRange) * 100)}%
+              {Math.round(((topWindow.sum - damageInRange) / damageInRange) * 100)}%
             </div>
           </div>
         </div>
@@ -675,18 +595,6 @@ const BreathOfEonsHelper: FC<Props> = ({ windows, fightStartTime, fightEndTime, 
               <DonutChart items={damageSourcesOptimal} />
             </div>
           </div>
-          {!sameTargets && (
-            <div className="table">
-              <div className="flex-row">
-                <div className="flex-cell">
-                  <span className="optimalTargetsBreath">Optimal Targets Window</span>
-                  <DonutChart items={damageSourcesOptimalTargets} />
-                </div>
-                <div className="flex-cell"></div>
-                <div className="flex-cell"></div>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     );
