@@ -75,6 +75,7 @@ const BreathOfEonsHelper: FC<Props> = ({ windows, fightStartTime, fightEndTime, 
    * that can accumulate into BoE */
   const filter = useMemo(() => {
     const filter = `type = "damage" 
+    AND (source.role = "ranged" or source.role = "melee")
     AND (target.id != source.id)
     AND target.id not in(169428, 169430, 169429, 169426, 169421, 169425, 168932)
     AND not (target.id = source.owner.id)
