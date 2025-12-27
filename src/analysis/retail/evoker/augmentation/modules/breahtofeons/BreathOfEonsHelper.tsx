@@ -66,7 +66,7 @@ interface WindowResponse {
 
 const BreathOfEonsHelper: FC<Props> = ({ windows, fightStartTime, fightEndTime, owner }) => {
   const damageTables: {
-    table: DamageEvent[];
+    events: DamageEvent[];
     start: number;
     end: number;
   }[] = [];
@@ -107,7 +107,7 @@ const BreathOfEonsHelper: FC<Props> = ({ windows, fightStartTime, fightEndTime, 
 
     result.forEach((window) => {
       damageTables.push({
-        table: window.events,
+        events: window.events,
         start: window.start,
         end: window.end,
       });
@@ -249,7 +249,7 @@ const BreathOfEonsHelper: FC<Props> = ({ windows, fightStartTime, fightEndTime, 
       new Set<string>(),
     );
 
-    for (const event of table.table) {
+    for (const event of table.events) {
       recentDamage.push(event);
 
       /** This first part is only gathering damage from our current window
