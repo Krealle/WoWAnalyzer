@@ -219,10 +219,10 @@ const BreathOfEonsHelper: FC<Props> = ({ windows, fightStartTime, fightEndTime, 
     );
   }
 
-  function processWindowData(index: number) {
-    const table = damageTables[index];
+  function processWindowData(windowIndex: number) {
+    const table = damageTables[windowIndex];
 
-    const windowData: BreathOfEonsWindows = windows[index];
+    const windowData: BreathOfEonsWindows = windows[windowIndex];
 
     const ebonMightDropTimestamp =
       windowData.breathPerformance.ebonMightProblems.find((problem) => problem.count === 0)
@@ -370,23 +370,23 @@ const BreathOfEonsHelper: FC<Props> = ({ windows, fightStartTime, fightEndTime, 
      * Breath explodes, resulting in an overvaluation. e.g. Neltharion */
     const damageDifference =
       ((damageInRange - earlyDeadMobsDamage) * BREATH_OF_EONS_MULTIPLIER) /
-      windows[index].breathPerformance.damage;
+      windows[windowIndex].breathPerformance.damage;
     const damageToDisplay =
       damageDifference > 1.1 || damageDifference < 0.9
-        ? windows[index].breathPerformance.damage
+        ? windows[windowIndex].breathPerformance.damage
         : (damageInRange - earlyDeadMobsDamage) * BREATH_OF_EONS_MULTIPLIER;
 
     if (debug) {
-      console.log(index + 1 + '. ', 'Top Window:', topWindow);
-      console.log(index + 1 + '. ', 'Top Window optimal:', topWindowOptimalTarget);
+      console.log(windowIndex + 1 + '. ', 'Top Window:', topWindow);
+      console.log(windowIndex + 1 + '. ', 'Top Window optimal:', topWindowOptimalTarget);
       console.log(
-        index + 1 + '.',
+        windowIndex + 1 + '.',
         'Damage within current window:',
         damageInRange,
         'Expected sum:',
-        windows[index].breathPerformance.damage * 10,
+        windows[windowIndex].breathPerformance.damage * 10,
         ' difference:',
-        windows[index].breathPerformance.damage * 10 - damageInRange,
+        windows[windowIndex].breathPerformance.damage * 10 - damageInRange,
         'start:',
         formatDuration(breathStart - fightStartTime),
         breathStart,
@@ -395,13 +395,13 @@ const BreathOfEonsHelper: FC<Props> = ({ windows, fightStartTime, fightEndTime, 
         breathEnd,
       );
       console.log(
-        index + 1 + '.',
+        windowIndex + 1 + '.',
         'source:',
         sourceInRange.sort((a, b) => b.damage - a.damage),
       );
-      console.log(index + 1 + '.', 'sorted source:', sortedSourceInRange);
-      console.log(index + 1 + '.', 'damage lost to ebon drop:', lostDamage);
-      console.log(index + 1 + '.', 'damage lost to early mob deaths:', earlyDeadMobsDamage);
+      console.log(windowIndex + 1 + '.', 'sorted source:', sortedSourceInRange);
+      console.log(windowIndex + 1 + '.', 'damage lost to ebon drop:', lostDamage);
+      console.log(windowIndex + 1 + '.', 'damage lost to early mob deaths:', earlyDeadMobsDamage);
     }
 
     return {
