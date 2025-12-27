@@ -25,6 +25,7 @@ import {
   ABILITY_NO_SCALING,
   ABILITY_NO_EM_SCALING,
 } from '../util/abilityFilter';
+import { encodeEventTargetString } from 'parser/shared/modules/Enemies';
 
 interface Props {
   windows: BreathOfEonsWindows[];
@@ -240,13 +241,10 @@ const BreathOfEonsHelper: FC<Props> = ({ windows, fightStartTime, fightEndTime, 
 
     const buffedPlayers = Array.from(windowData.breathPerformance.buffedPlayers.values());
 
-    const mobsToIgnore = [];
-    for (const event of windowData.breathPerformance.earlyDeadMobs) {
-      mobsToIgnore.push({
-        targetID: event.targetID,
-        targetInstance: event.targetInstance,
-      });
-    }
+    const mobsToIgnore = windowData.breathPerformance.earlyDeadMobs.reduce(
+      (acc, mob) => acc.add(encodeEventTargetString(mob)),
+      new Set<string>(),
+    );
 
     for (const event of table.table) {
       recentDamage.push(event);
@@ -286,12 +284,7 @@ const BreathOfEonsHelper: FC<Props> = ({ windows, fightStartTime, fightEndTime, 
           }
           damageInRange += damageAmount;
 
-          if (
-            mobsToIgnore.some(
-              (item) =>
-                item.targetID === event.targetID && item.targetInstance === event.targetInstance,
-            )
-          ) {
+          if (mobsToIgnore.has(encodeEventTargetString(event))) {
             earlyDeadMobsDamage += damageAmount;
           }
         }
