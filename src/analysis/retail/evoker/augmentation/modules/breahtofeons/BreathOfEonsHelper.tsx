@@ -26,7 +26,7 @@ import {
 } from '../util/abilityFilter';
 import { encodeEventTargetString } from 'parser/shared/modules/Enemies';
 
-interface Props {
+interface BreathOfEonsHelperProps {
   windows: BreathOfEonsWindows[];
   fightStartTime: number;
   fightEndTime: number;
@@ -66,7 +66,12 @@ interface WindowResponse {
   end: number;
 }
 
-const BreathOfEonsHelper: FC<Props> = ({ windows, fightStartTime, fightEndTime, owner }) => {
+const BreathOfEonsHelper: FC<BreathOfEonsHelperProps> = ({
+  windows,
+  fightStartTime,
+  fightEndTime,
+  owner,
+}) => {
   const damageTables: {
     events: DamageEvent[];
     start: number;
