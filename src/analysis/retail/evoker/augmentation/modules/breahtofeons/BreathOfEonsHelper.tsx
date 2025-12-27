@@ -328,27 +328,18 @@ const BreathOfEonsHelper: FC<Props> = ({ windows, fightStartTime, fightEndTime, 
     const sortedWindows = damageWindows.sort((a, b) => b.sum - a.sum);
     const topWindow = sortedWindows[0];
 
-    /** If the damage difference between what we found and what actually happened is greater than 10%
-     * we display the actual amount - this only seems to happen when a target becomes immune before
-     * Breath explodes, resulting in an overvaluation. e.g. Neltharion */
-    const damageDifference =
-      ((damageInRange - earlyDeadMobsDamage) * BREATH_OF_EONS_MULTIPLIER) /
-      windows[windowIndex].breathPerformance.damage;
-    const damageToDisplay =
-      damageDifference > 1.1 || damageDifference < 0.9
-        ? windows[windowIndex].breathPerformance.damage
-        : (damageInRange - earlyDeadMobsDamage) * BREATH_OF_EONS_MULTIPLIER;
+    const damageToDisplay = damageInRange - earlyDeadMobsDamage;
 
     if (debug) {
       console.log(windowIndex + 1 + '. ', 'Top Window:', topWindow);
       console.log(
         windowIndex + 1 + '.',
         'Damage within current window:',
-        damageInRange,
+        damageToDisplay,
         'Expected sum:',
-        windows[windowIndex].breathPerformance.damage * 10,
+        windows[windowIndex].breathPerformance.damage,
         ' difference:',
-        windows[windowIndex].breathPerformance.damage * 10 - damageInRange,
+        damageToDisplay / windows[windowIndex].breathPerformance.damage,
         'start:',
         formatDuration(breathStart - fightStartTime),
         breathStart,
@@ -457,7 +448,7 @@ const BreathOfEonsHelper: FC<Props> = ({ windows, fightStartTime, fightEndTime, 
       damageSourcesOptimal.push({
         color: colorMap[i],
         label: playerInfo?.name,
-        valueTooltip: formatNumber(source.damage * BREATH_OF_EONS_MULTIPLIER),
+        valueTooltip: formatNumber(source.damage),
         value: source.damage,
       });
     }
@@ -470,7 +461,7 @@ const BreathOfEonsHelper: FC<Props> = ({ windows, fightStartTime, fightEndTime, 
       damageSourcesCurrent.push({
         color: colorMap[i],
         label: playerInfo?.name,
-        valueTooltip: formatNumber(source.damage * BREATH_OF_EONS_MULTIPLIER),
+        valueTooltip: formatNumber(source.damage),
         value: source.damage,
       });
     }
@@ -490,14 +481,10 @@ const BreathOfEonsHelper: FC<Props> = ({ windows, fightStartTime, fightEndTime, 
               </TooltipElement>
             </div>
             <div className="flex-cell">
-              {formatNumber(damageToDisplay)} /{' '}
-              {formatNumber(topWindow.sum * BREATH_OF_EONS_MULTIPLIER)}
+              {formatNumber(damageToDisplay)} / {formatNumber(topWindow.sum)}
             </div>
             <div className="flex-cell">
-              <PassFailBar
-                pass={damageToDisplay}
-                total={topWindow.sum * BREATH_OF_EONS_MULTIPLIER}
-              />
+              <PassFailBar pass={damageToDisplay} total={topWindow.sum} />
             </div>
           </div>
           <div className="flex-row">
@@ -525,9 +512,7 @@ const BreathOfEonsHelper: FC<Props> = ({ windows, fightStartTime, fightEndTime, 
                 <div className="flex-cell">
                   <span>Dropped Ebon Might uptime:</span>
                 </div>
-                <div className="flex-cell">
-                  {formatNumber(lostDamage * BREATH_OF_EONS_MULTIPLIER)}
-                </div>
+                <div className="flex-cell">{formatNumber(lostDamage)}</div>
               </div>
             )}
             {earlyDeadMobsDamage > 0 && (
@@ -535,9 +520,7 @@ const BreathOfEonsHelper: FC<Props> = ({ windows, fightStartTime, fightEndTime, 
                 <div className="flex-cell">
                   <span>Mobs dying early:</span>
                 </div>
-                <div className="flex-cell">
-                  {formatNumber(earlyDeadMobsDamage * BREATH_OF_EONS_MULTIPLIER)}
-                </div>
+                <div className="flex-cell">{formatNumber(earlyDeadMobsDamage)}</div>
               </div>
             )}
           </div>
