@@ -129,7 +129,9 @@ const BreathOfEonsHelper: FC<Props> = ({ windows, fightStartTime, fightEndTime, 
       // High maxPage allowances needed otherwise it breaks
       40,
     )) as DamageEvent[];
-    const events = response.filter((event) => !ABILITY_FILTER.has(event.ability.guid));
+    const events = response.filter(
+      (event) => !ABILITY_FILTER.has(event.ability.guid) && !event.subtractsFromSupportedActor,
+    );
 
     return {
       events,
@@ -253,11 +255,6 @@ const BreathOfEonsHelper: FC<Props> = ({ windows, fightStartTime, fightEndTime, 
       /** This first part is only gathering damage from our current window
        * and from the current buffed targets - ie. baseline */
       if (event.timestamp >= breathStart && event.timestamp <= breathEnd) {
-        /** These shouldn't show up but just incase */
-        if (event.subtractsFromSupportedActor) {
-          continue;
-        }
-
         const sourceID =
           (pets.includes(event.sourceID ?? -1)
             ? petToPlayerMap.get(event.sourceID ?? -1)
